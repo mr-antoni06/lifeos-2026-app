@@ -96,7 +96,7 @@ export const useLifeOSStore = create<LifeOSStore>()(
         const habit = state.habits.find((h) => h.id === habitId);
         
         if (!habit) {
-          return { leveledUp: false, newLevel: habit?.level || 1 };
+          return { leveledUp: false, newLevel: 1 };
         }
 
         const xpGained = calculateXP(value, habit.target) * state.settings.xpMultiplier;
