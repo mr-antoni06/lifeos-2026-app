@@ -1,60 +1,51 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Habit } from '@/lib/types';
 import { useLifeOSStore } from '@/lib/store';
-import { getLevelColor, getStreakEmoji } from '@/lib/utils';
-import * as LucideIcons from 'lucide-react';
-import { Trash2, Plus, Minus } from 'lucide-react';
+import { Zap, MoreVertical } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface HabitCardProps {
   habit: Habit;
+  onEdit: (habit: Habit) => void;
 }
 
-export default function HabitCard({ habit }: HabitCardProps) {
-  const { logProgress, deleteHabit } = useLifeOSStore();
-  const [inputValue, setInputValue] = useState('');
-  const [showInput, setShowInput] = useState(false);
+export default function HabitCard({ habit, onEdit }: HabitCardProps) {
+  const { logProgress, logs, deleteHabit } = useLifeOSStore();
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customValue, setCustomValue] = useState('');
+  const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Get icon dynamically
-  const IconComponent = (LucideIcons as any)[habit.icon] || LucideIcons.Target;
+  // Calculate today's progress
+  const today = new Date().toISOString().split('T')[0];
+  const todayLogs = logs.filter((l) => l.habitId === habit.id && l.date === today);
+  const todayProgress = todayLogs.reduce((sum, log) => sum + log.value, 0);
+  const progressPercentage = Math.min((todayProgress / habit.target) * 100, 100);
 
-  const progressPercentage = (habit.xp / habit.xpToNextLevel) * 100;
-  const levelColor = getLevelColor(habit.level);
-  const streakEmoji = getStreakEmoji(habit.streak);
+  // XP Progress
+  const xpPercentage = (habit.xp / habit.xpToNextLevel) * 100;
 
-  const handleLogProgress = () => {
-    const value = parseFloat(inputValue);
-    if (value > 0) {
-      const result = logProgress(habit.id, value);
-      
-      // Trigger confetti on level up
-      if (result.leveledUp) {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#00ff41', '#00d9ff', '#c900ff'],
-        });
-        
-        // Additional neon flash effect
-        const card = document.getElementById(`habit-${habit.id}`);
-        if (card) {
-          card.classList.add('animate-pulse-neon');
-          setTimeout(() => {
-            card.classList.remove('animate-pulse-neon');
-          }, 2000);
-        }
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
       }
-      
-      setInputValue('');
-      setShowInput(false);
-    }
-  };
+    };
 
-  const quickLog = (multiplier: number) => {
-    const value = habit.target * multiplier;
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
+
+  const handleLog = (value: number) => {
     const result = logProgress(habit.id, value);
     
     if (result.leveledUp) {
@@ -62,151 +53,192 @@ export default function HabitCard({ habit }: HabitCardProps) {
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#00ff41', '#00d9ff', '#c900ff'],
+        colors: ['#00ff41'],
       });
     }
   };
 
+  const handleCustomLog = () => {
+    const value = parseFloat(customValue);
+    if (value > 0) {
+      handleLog(value);
+      setCustomValue('');
+      setShowCustomInput(false);
+    }
+  };
+
+  const handleDelete = () => {
+    deleteHabit(habit.id);
+    setShowDeleteConfirm(false);
+  };
+
   return (
-    <div
-      id={`habit-${habit.id}`}
-      className="bg-cyber-dark border-2 border-cyber-gray hover:border-cyber-neon transition-all duration-300 rounded-lg p-4 relative overflow-hidden group"
-      style={{ borderColor: habit.color + '40' }}
-    >
-      {/* Background Glow */}
-      <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 blur-xl"
-        style={{ backgroundColor: habit.color }}
-      />
-
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3 relative z-10">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: habit.color + '20', color: habit.color }}
-          >
-            <IconComponent className="w-6 h-6" />
+    <>
+      <div className="bg-cyber-panel border border-cyber-gray rounded-lg p-4 hover:border-cyber-neon/50 transition-all group relative">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <h3 className="text-white font-medium text-base mb-1">{habit.name}</h3>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-cyber-text-dim uppercase tracking-wider">
+                LVL {habit.level}
+              </span>
+              <span className="text-cyber-text-dim">|</span>
+              <span className="text-cyber-text-muted uppercase tracking-wider">
+                {habit.unit}
+              </span>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-cyber-neon">{habit.name}</h3>
-            <p className="text-xs text-cyber-neon/50">
-              Target: {habit.target} {habit.unit}/day
-            </p>
+          
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 text-cyber-yellow">
+              <Zap className="w-4 h-4 fill-cyber-yellow" />
+              <span className="text-sm font-bold">{habit.streak}</span>
+            </div>
+
+            {/* Three-dot Menu */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-1 hover:bg-cyber-gray rounded transition-all opacity-0 group-hover:opacity-100"
+              >
+                <MoreVertical className="w-4 h-4 text-cyber-text-muted hover:text-cyber-neon" />
+              </button>
+
+              {/* Dropdown Menu */}
+              {showMenu && (
+                <div className="absolute right-0 top-8 w-32 bg-cyber-panel border border-cyber-gray rounded-lg shadow-lg z-10">
+                  <button
+                    onClick={() => {
+                      onEdit(habit);
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-cyber-text-muted hover:text-cyber-neon hover:bg-cyber-gray transition-all rounded-t-lg"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(true);
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-cyber-red hover:bg-cyber-red/10 transition-all rounded-b-lg"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Delete Button */}
-        <button
-          onClick={() => {
-            if (confirm(`Delete "${habit.name}"? This cannot be undone.`)) {
-              deleteHabit(habit.id);
-            }
-          }}
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-cyber-red/20 rounded"
-        >
-          <Trash2 className="w-4 h-4 text-cyber-red" />
-        </button>
+      {/* Daily Progress */}
+      <div className="mb-3">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-xs text-cyber-text-dim uppercase tracking-wider">
+            DAILY: {todayProgress} / {habit.target} {habit.unit}
+          </span>
+          <span className="text-xs text-cyber-neon font-mono">
+            {Math.round(progressPercentage)}%
+          </span>
+        </div>
+        <div className="h-2 bg-cyber-gray rounded-full overflow-hidden">
+          <div
+            className="h-full bg-cyber-gray-light transition-all duration-500"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
       </div>
 
-      {/* Level & Streak */}
-      <div className="flex items-center justify-between mb-3 relative z-10">
-        <div className="flex items-center gap-2">
+      {/* XP Progress */}
+      <div className="mb-4">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-xs text-cyber-text-dim">
+            XP: {habit.xp} / {habit.xpToNextLevel}
+          </span>
+          <span className="text-xs text-cyber-text-dim uppercase tracking-wider">
+            NEXT LVL
+          </span>
+        </div>
+        <div className="h-1.5 bg-cyber-gray rounded-full overflow-hidden">
           <div
-            className="px-3 py-1 rounded border-2 font-bold text-sm"
-            style={{ borderColor: levelColor, color: levelColor }}
-          >
-            LVL {habit.level}
-          </div>
-          <div className="text-2xl">{streakEmoji}</div>
-          <span className="text-sm text-cyber-neon/70">{habit.streak} days</span>
+            className="h-full bg-cyber-blue transition-all duration-500"
+            style={{ width: `${xpPercentage}%` }}
+          />
         </div>
       </div>
 
-      {/* XP Progress Bar */}
-      <div className="mb-4 relative z-10">
-        <div className="flex justify-between text-xs text-cyber-neon/50 mb-1">
-          <span>XP: {habit.xp}</span>
-          <span>{habit.xpToNextLevel}</span>
+      {/* Actions */}
+      {!showCustomInput ? (
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowCustomInput(true)}
+            className="px-4 py-2 bg-cyber-gray border border-cyber-gray-light rounded text-xs text-cyber-text-muted hover:text-cyber-neon hover:border-cyber-neon transition-all uppercase tracking-wider"
+          >
+            Qty
+          </button>
+          <button
+            onClick={() => handleLog(habit.target)}
+            className="flex-1 px-4 py-2 bg-cyber-neon border border-cyber-neon rounded text-xs text-cyber-black font-bold hover:bg-cyber-neon-bright transition-all uppercase tracking-wider"
+          >
+            + LOG DATA
+          </button>
         </div>
-        <div className="h-3 bg-cyber-black rounded-full overflow-hidden border border-cyber-gray">
-          <div
-            className="h-full transition-all duration-500 ease-out relative"
-            style={{
-              width: `${progressPercentage}%`,
-              backgroundColor: levelColor,
-              boxShadow: `0 0 10px ${levelColor}`,
+      ) : (
+        <div className="flex gap-2">
+          <input
+            type="number"
+            value={customValue}
+            onChange={(e) => setCustomValue(e.target.value)}
+            placeholder="0"
+            className="flex-1 px-3 py-2 bg-cyber-gray border border-cyber-gray-light rounded text-sm text-white outline-none focus:border-cyber-neon transition-all"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCustomLog();
+              if (e.key === 'Escape') setShowCustomInput(false);
             }}
+          />
+          <button
+            onClick={handleCustomLog}
+            className="px-4 py-2 bg-cyber-neon border border-cyber-neon rounded text-xs text-cyber-black font-bold hover:bg-cyber-neon-bright transition-all"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
-          </div>
+            ✓
+          </button>
+          <button
+            onClick={() => setShowCustomInput(false)}
+            className="px-4 py-2 bg-cyber-gray border border-cyber-gray-light rounded text-xs text-cyber-text-muted hover:text-cyber-red hover:border-cyber-red transition-all"
+          >
+            ✕
+          </button>
         </div>
-      </div>
+      )}
+    </div>
 
-      {/* Quick Actions */}
-      <div className="space-y-2 relative z-10">
-        {!showInput ? (
-          <>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => quickLog(0.5)}
-                className="px-3 py-2 bg-cyber-gray hover:bg-cyber-neon/20 border border-cyber-neon/30 hover:border-cyber-neon rounded text-sm text-cyber-neon transition-all"
-              >
-                50%
-              </button>
-              <button
-                onClick={() => quickLog(1)}
-                className="px-3 py-2 bg-cyber-gray hover:bg-cyber-neon/20 border border-cyber-neon/30 hover:border-cyber-neon rounded text-sm text-cyber-neon transition-all"
-              >
-                100%
-              </button>
-              <button
-                onClick={() => quickLog(1.5)}
-                className="px-3 py-2 bg-cyber-gray hover:bg-cyber-neon/20 border border-cyber-neon/30 hover:border-cyber-neon rounded text-sm text-cyber-neon transition-all"
-              >
-                150%
-              </button>
-            </div>
+    {/* Delete Confirmation Modal */}
+    {showDeleteConfirm && (
+      <div className="fixed inset-0 bg-cyber-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-cyber-panel border border-cyber-red rounded-lg p-6 max-w-md w-full">
+          <h3 className="text-lg font-medium text-white mb-4">Delete Protocol?</h3>
+          <p className="text-sm text-cyber-text-muted mb-6">
+            Are you sure you want to delete "{habit.name}"? This will remove all logs and progress. This action cannot be undone.
+          </p>
+          <div className="flex gap-3">
             <button
-              onClick={() => setShowInput(true)}
-              className="w-full px-4 py-2 bg-cyber-neon text-cyber-black hover:bg-cyber-neon-bright font-bold rounded transition-all flex items-center justify-center gap-2"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="flex-1 px-4 py-2 bg-cyber-gray border border-cyber-gray-light rounded text-sm text-cyber-text-muted hover:text-white hover:border-cyber-neon transition-all"
             >
-              <Plus className="w-4 h-4" />
-              Log Custom
-            </button>
-          </>
-        ) : (
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <input
-                type="number"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder={`Enter ${habit.unit}...`}
-                className="flex-1 px-3 py-2 bg-cyber-black border border-cyber-neon/30 focus:border-cyber-neon rounded text-cyber-neon outline-none"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleLogProgress();
-                  if (e.key === 'Escape') setShowInput(false);
-                }}
-              />
-              <button
-                onClick={handleLogProgress}
-                className="px-4 py-2 bg-cyber-neon text-cyber-black hover:bg-cyber-neon-bright font-bold rounded transition-all"
-              >
-                ✓
-              </button>
-            </div>
-            <button
-              onClick={() => setShowInput(false)}
-              className="w-full px-4 py-2 bg-cyber-gray hover:bg-cyber-red/20 text-cyber-neon rounded transition-all flex items-center justify-center gap-2"
-            >
-              <Minus className="w-4 h-4" />
               Cancel
             </button>
+            <button
+              onClick={handleDelete}
+              className="flex-1 px-4 py-2 bg-cyber-red border border-cyber-red rounded text-sm text-white font-bold hover:bg-cyber-red/80 transition-all"
+            >
+              Delete
+            </button>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+    )}
+  </>
   );
 }

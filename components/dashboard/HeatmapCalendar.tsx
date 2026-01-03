@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { HabitLog } from '@/lib/types';
 import { generateHeatmapData } from '@/lib/utils';
-import { format, startOfYear, eachWeekOfInterval, eachDayOfInterval, startOfWeek, endOfWeek, getDay } from 'date-fns';
+import { format, startOfYear, eachWeekOfInterval, eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
 
 interface HeatmapCalendarProps {
   logs: HabitLog[];
@@ -30,22 +30,23 @@ export default function HeatmapCalendar({ logs }: HeatmapCalendarProps) {
 
   const getColor = (count: number) => {
     if (count === 0) return '#1a1a1a';
-    if (count <= 2) return '#00331a';
-    if (count <= 5) return '#00661a';
-    if (count <= 8) return '#00991a';
+    if (count <= 2) return '#1f3d2e';
+    if (count <= 5) return '#2d5a40';
+    if (count <= 8) return '#3b7752';
     return '#00ff41';
   };
 
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
   return (
-    <div className="bg-cyber-dark border-2 border-cyber-gray rounded-lg p-6">
-      <h3 className="text-xl font-bold text-cyber-neon mb-4">
-        {'>'} ACTIVITY_HEATMAP.render()
-      </h3>
+    <div className="bg-cyber-panel border border-cyber-gray rounded-lg p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-2 h-2 rounded-full bg-cyber-neon" />
+        <h3 className="text-sm font-medium text-cyber-text-muted tracking-wider uppercase">
+          SYSTEM ACTIVITY LOG
+        </h3>
+      </div>
       
-      <div className="overflow-x-auto">
-        <div className="inline-flex gap-1">
+      <div className="overflow-x-auto pb-2">
+        <div className="inline-flex gap-[2px]">
           {weeks.map((weekStart, weekIndex) => {
             const days = eachDayOfInterval({
               start: weekStart,
@@ -53,7 +54,7 @@ export default function HeatmapCalendar({ logs }: HeatmapCalendarProps) {
             });
 
             return (
-              <div key={weekIndex} className="flex flex-col gap-1">
+              <div key={weekIndex} className="flex flex-col gap-[2px]">
                 {days.map((day, dayIndex) => {
                   const dateStr = format(day, 'yyyy-MM-dd');
                   const count = dataMap[dateStr] || 0;
@@ -62,7 +63,7 @@ export default function HeatmapCalendar({ logs }: HeatmapCalendarProps) {
                   return (
                     <div
                       key={dayIndex}
-                      className="w-3 h-3 rounded-sm transition-all hover:scale-150 hover:z-10 relative group"
+                      className="w-[10px] h-[10px] rounded-[1px] transition-all hover:scale-125 relative group cursor-pointer"
                       style={{ backgroundColor: color }}
                       title={`${dateStr}: ${count} logs`}
                     >
@@ -81,18 +82,20 @@ export default function HeatmapCalendar({ logs }: HeatmapCalendarProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-2 mt-4 text-xs text-cyber-neon/50">
-        <span>Less</span>
-        <div className="flex gap-1">
-          {[0, 2, 5, 8, 10].map((count) => (
-            <div
-              key={count}
-              className="w-3 h-3 rounded-sm"
-              style={{ backgroundColor: getColor(count) }}
-            />
-          ))}
+      <div className="flex items-center justify-between mt-4 pt-4 border-t border-cyber-gray">
+        <div className="flex items-center gap-2 text-xs text-cyber-text-dim uppercase tracking-wider">
+          <span>IDLE</span>
+          <div className="flex gap-1">
+            {[0, 2, 5, 8, 10].map((count) => (
+              <div
+                key={count}
+                className="w-3 h-3 rounded-[1px]"
+                style={{ backgroundColor: getColor(count) }}
+              />
+            ))}
+          </div>
+          <span>OVERCLOCK</span>
         </div>
-        <span>More</span>
       </div>
     </div>
   );

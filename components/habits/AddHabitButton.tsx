@@ -45,25 +45,24 @@ export default function AddHabitButton() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-cyber-neon text-cyber-black hover:bg-cyber-neon-bright font-bold rounded transition-all flex items-center gap-2 shadow-neon-sm"
+        className="w-10 h-10 rounded-full border-2 border-cyber-neon bg-cyber-black hover:bg-cyber-neon/10 flex items-center justify-center transition-all group"
       >
-        <Plus className="w-5 h-5" />
-        New Habit
+        <Plus className="w-5 h-5 text-cyber-neon" />
       </button>
     );
   }
 
   return (
     <div className="fixed inset-0 bg-cyber-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-cyber-dark border-2 border-cyber-neon rounded-lg p-6 max-w-md w-full shadow-neon">
+      <div className="bg-cyber-panel border border-cyber-neon rounded-lg p-6 max-w-md w-full">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-cyber-neon">{'>'} NEW_HABIT.init()</h2>
+          <h2 className="text-lg font-medium text-white">{'>'} NEW PROTOCOL</h2>
           <button
             onClick={() => setIsOpen(false)}
             className="p-2 hover:bg-cyber-gray rounded transition-all"
           >
-            <X className="w-6 h-6 text-cyber-neon" />
+            <X className="w-5 h-5 text-cyber-text-muted hover:text-cyber-neon" />
           </button>
         </div>
 
@@ -71,20 +70,20 @@ export default function AddHabitButton() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Habit Name */}
           <div>
-            <label className="block text-sm text-cyber-neon/70 mb-2">Habit Name</label>
+            <label className="block text-xs text-cyber-text-dim uppercase tracking-wider mb-2">Protocol Name</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g., Read Books"
-              className="w-full px-4 py-2 bg-cyber-black border border-cyber-neon/30 focus:border-cyber-neon rounded text-cyber-neon outline-none"
+              className="w-full px-4 py-2 bg-cyber-gray border border-cyber-gray-light focus:border-cyber-neon rounded text-white outline-none"
               required
             />
           </div>
 
           {/* Icon Selection */}
           <div>
-            <label className="block text-sm text-cyber-neon/70 mb-2">Icon</label>
+            <label className="block text-xs text-cyber-text-dim uppercase tracking-wider mb-2">Icon</label>
             <div className="grid grid-cols-6 gap-2">
               {iconOptions.map((iconName) => {
                 const IconComponent = (LucideIcons as any)[iconName];
@@ -93,13 +92,13 @@ export default function AddHabitButton() {
                     key={iconName}
                     type="button"
                     onClick={() => setFormData({ ...formData, icon: iconName })}
-                    className={`p-3 rounded border-2 transition-all ${
+                    className={`p-3 rounded border transition-all ${
                       formData.icon === iconName
-                        ? 'border-cyber-neon bg-cyber-neon/20'
-                        : 'border-cyber-gray hover:border-cyber-neon/50'
+                        ? 'border-cyber-neon bg-cyber-neon/10'
+                        : 'border-cyber-gray-light hover:border-cyber-neon/50'
                     }`}
                   >
-                    <IconComponent className="w-5 h-5 text-cyber-neon" />
+                    <IconComponent className="w-5 h-5 text-cyber-text-muted" />
                   </button>
                 );
               })}
@@ -108,17 +107,17 @@ export default function AddHabitButton() {
 
           {/* Color Selection */}
           <div>
-            <label className="block text-sm text-cyber-neon/70 mb-2">Color</label>
+            <label className="block text-xs text-cyber-text-dim uppercase tracking-wider mb-2">Color</label>
             <div className="flex gap-2">
               {colorOptions.map((color) => (
                 <button
                   key={color}
                   type="button"
                   onClick={() => setFormData({ ...formData, color })}
-                  className={`w-10 h-10 rounded-full border-2 transition-all ${
+                  className={`w-10 h-10 rounded-full border transition-all ${
                     formData.color === color
                       ? 'border-cyber-neon scale-110'
-                      : 'border-cyber-gray hover:scale-105'
+                      : 'border-cyber-gray-light hover:scale-105'
                   }`}
                   style={{ backgroundColor: color }}
                 />
@@ -129,24 +128,24 @@ export default function AddHabitButton() {
           {/* Target & Unit */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-cyber-neon/70 mb-2">Daily Target</label>
+              <label className="block text-xs text-cyber-text-dim uppercase tracking-wider mb-2">Daily Target</label>
               <input
                 type="number"
                 value={formData.target}
                 onChange={(e) => setFormData({ ...formData, target: parseInt(e.target.value) || 1 })}
                 min="1"
-                className="w-full px-4 py-2 bg-cyber-black border border-cyber-neon/30 focus:border-cyber-neon rounded text-cyber-neon outline-none"
+                className="w-full px-4 py-2 bg-cyber-gray border border-cyber-gray-light focus:border-cyber-neon rounded text-white outline-none"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm text-cyber-neon/70 mb-2">Unit</label>
+              <label className="block text-xs text-cyber-text-dim uppercase tracking-wider mb-2">Unit</label>
               <input
                 type="text"
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                placeholder="e.g., pages"
-                className="w-full px-4 py-2 bg-cyber-black border border-cyber-neon/30 focus:border-cyber-neon rounded text-cyber-neon outline-none"
+                placeholder="e.g., mins"
+                className="w-full px-4 py-2 bg-cyber-gray border border-cyber-gray-light focus:border-cyber-neon rounded text-white outline-none"
                 required
               />
             </div>
@@ -155,9 +154,9 @@ export default function AddHabitButton() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full px-4 py-3 bg-cyber-neon text-cyber-black hover:bg-cyber-neon-bright font-bold rounded transition-all shadow-neon-sm"
+            className="w-full px-4 py-3 bg-cyber-neon text-cyber-black hover:bg-cyber-neon-bright font-bold rounded transition-all uppercase tracking-wider text-sm"
           >
-            {'>'} CREATE_HABIT()
+            + CREATE PROTOCOL
           </button>
         </form>
       </div>
