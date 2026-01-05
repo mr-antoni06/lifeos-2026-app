@@ -3,39 +3,63 @@
 import { useState, useMemo } from 'react';
 import { useLifeOSStore } from '@/lib/store';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { Shield, Clock, TrendingUp, Plus, X } from 'lucide-react';
+import { Shield, Clock, TrendingUp, Plus, X, Calendar } from 'lucide-react';
 import { formatDuration } from '@/lib/utils';
-import { format, startOfWeek, endOfWeek, parseISO, isWithinInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfDay, endOfDay, parseISO, isWithinInterval } from 'date-fns';
+
+type TimePeriod = 'day' | 'week' | 'month' | 'year';
 
 export default function AntiScrollPage() {
   const { habits, antiScrollLogs, logAntiScroll } = useLifeOSStore();
   const [isAddingLog, setIsAddingLog] = useState(false);
   const [timeResisted, setTimeResisted] = useState('');
   const [selectedHabit, setSelectedHabit] = useState('');
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('week');
 
-  // Calculate this week's data
-  const thisWeekRange = {
-    start: startOfWeek(new Date(), { weekStartsOn: 1 }),
-    end: endOfWeek(new Date(), { weekStartsOn: 1 }),
-  };
+  // Calculate date range based on selected time period
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    switch (timePeriod) {
+      case 'day':
+        return {
+          start: startOfDay(now),
+          end: endOfDay(now),
+        };
+      case 'week':
+        return {
+          start: startOfWeek(now, { weekStartsOn: 1 }),
+          end: endOfWeek(now, { weekStartsOn: 1 }),
+        };
+      case 'month':
+        return {
+          start: startOfMonth(now),
+          end: endOfMonth(now),
+        };
+      case 'year':
+        return {
+          start: startOfYear(now),
+          end: endOfYear(now),
+        };
+    }
+  }, [timePeriod]);
 
-  const thisWeekLogs = useMemo(() => {
+  const filteredLogs = useMemo(() => {
     return antiScrollLogs.filter((log) => {
       const logDate = parseISO(log.date);
-      return isWithinInterval(logDate, thisWeekRange);
+      return isWithinInterval(logDate, dateRange);
     });
-  }, [antiScrollLogs, thisWeekRange]);
+  }, [antiScrollLogs, dateRange]);
 
   // Calculate total time resisted
   const totalTimeResisted = useMemo(() => {
-    return thisWeekLogs.reduce((sum, log) => sum + log.timeResisted, 0);
-  }, [thisWeekLogs]);
+    return filteredLogs.reduce((sum, log) => sum + log.timeResisted, 0);
+  }, [filteredLogs]);
 
   // Prepare pie chart data
   const pieData = useMemo(() => {
     const habitTimeMap: Record<string, number> = {};
 
-    thisWeekLogs.forEach((log) => {
+    filteredLogs.forEach((log) => {
       const habit = habits.find((h) => h.id === log.habitChosen);
       if (habit) {
         habitTimeMap[habit.name] = (habitTimeMap[habit.name] || 0) + log.timeResisted;
@@ -50,7 +74,7 @@ export default function AntiScrollPage() {
         color: habit?.color || '#00ff41',
       };
     });
-  }, [thisWeekLogs, habits]);
+  }, [filteredLogs, habits]);
 
   // Handle add log
   const handleAddLog = () => {
@@ -63,8 +87,34 @@ export default function AntiScrollPage() {
     }
   };
 
-  // Calculate average daily resistance
-  const avgDailyResistance = (totalTimeResisted / 7).toFixed(0);
+  // Calculate average daily resistance based on time period
+  const getDaysInPeriod = () => {
+    switch (timePeriod) {
+      case 'day':
+        return 1;
+      case 'week':
+        return 7;
+      case 'month':
+        return 30;
+      case 'year':
+        return 365;
+    }
+  };
+  const avgDailyResistance = (totalTimeResisted / getDaysInPeriod()).toFixed(0);
+
+  // Get period label for display
+  const getPeriodLabel = () => {
+    switch (timePeriod) {
+      case 'day':
+        return 'Today';
+      case 'week':
+        return 'This Week';
+      case 'month':
+        return 'This Month';
+      case 'year':
+        return 'This Year';
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -78,12 +128,35 @@ export default function AntiScrollPage() {
         </p>
       </div>
 
+      {/* Time Period Selector */}
+      <div className="bg-cyber-dark border-2 border-cyber-gray rounded-lg p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <Calendar className="w-5 h-5 text-cyber-neon" />
+          <h3 className="text-lg font-bold text-cyber-neon">{'>'} VIEW_PERIOD.select()</h3>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {(['day', 'week', 'month', 'year'] as TimePeriod[]).map((period) => (
+            <button
+              key={period}
+              onClick={() => setTimePeriod(period)}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all uppercase text-sm ${
+                timePeriod === period
+                  ? 'bg-cyber-neon text-cyber-black'
+                  : 'bg-cyber-gray/30 text-cyber-neon/50 hover:text-cyber-neon hover:bg-cyber-gray/50'
+              }`}
+            >
+              {period}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-cyber-dark border-2 border-cyber-gray rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="w-5 h-5 text-cyber-neon" />
-            <p className="text-sm text-cyber-neon/50">Time Saved (This Week)</p>
+            <p className="text-sm text-cyber-neon/50">Time Saved ({getPeriodLabel()})</p>
           </div>
           <p className="text-3xl font-bold text-cyber-neon">{formatDuration(totalTimeResisted)}</p>
         </div>
@@ -99,7 +172,7 @@ export default function AntiScrollPage() {
             <TrendingUp className="w-5 h-5 text-cyber-purple" />
             <p className="text-sm text-cyber-neon/50">Total Logs</p>
           </div>
-          <p className="text-3xl font-bold text-cyber-purple">{thisWeekLogs.length}</p>
+          <p className="text-3xl font-bold text-cyber-purple">{filteredLogs.length}</p>
         </div>
       </div>
 
@@ -263,16 +336,16 @@ export default function AntiScrollPage() {
       {/* Recent Logs */}
       <div className="bg-cyber-dark border-2 border-cyber-gray rounded-lg p-6">
         <h3 className="text-xl font-bold text-cyber-neon mb-4">
-          {'>'} RECENT_VICTORIES.log
+          {'>'} VICTORIES_LOG ({getPeriodLabel()})
         </h3>
 
-        {thisWeekLogs.length === 0 ? (
+        {filteredLogs.length === 0 ? (
           <div className="text-center py-8 text-cyber-neon/30">
-            No logs yet this week. Start tracking your wins!
+            No logs yet for {getPeriodLabel().toLowerCase()}. Start tracking your wins!
           </div>
         ) : (
           <div className="space-y-2">
-            {[...thisWeekLogs]
+            {[...filteredLogs]
               .sort((a, b) => b.timestamp - a.timestamp)
               .slice(0, 10)
               .map((log) => {
