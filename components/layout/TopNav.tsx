@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Shield, BarChart3, Calendar } from 'lucide-react';
+import { LayoutDashboard, Shield, BarChart3, Calendar, Target } from 'lucide-react';
 
 const navigation = [
   { name: 'DASHBOARD', href: '/', icon: LayoutDashboard },
   { name: 'CONVERTER', href: '/anti-scroll', icon: Shield },
   { name: 'ANALYTICS', href: '/analytics', icon: BarChart3 },
   { name: 'PLANNER', href: '/planner', icon: Calendar },
+  { name: 'GOALS', href: '/goals', icon: Target },
 ];
 
 export default function TopNav() {

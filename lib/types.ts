@@ -38,10 +38,35 @@ export interface Settings {
   dailyGoalTime: string; // e.g., "09:00" for when day resets
 }
 
+export interface SubGoal {
+  id: string;
+  title: string;
+  completed: boolean;
+  completedAt: string | null;
+}
+
+export interface Goal {
+  id: string;
+  title: string;
+  description?: string;
+  startDate: string; // ISO date string
+  endDate: string; // ISO date string
+  reward?: string; // optional reward for completion
+  subGoals: SubGoal[];
+  completed: boolean;
+  createdAt: string;
+}
+
+export interface CompletedGoal extends Goal {
+  completedAt: string;
+}
+
 export interface GameState {
   habits: Habit[];
   logs: HabitLog[];
   antiScrollLogs: AntiScrollLog[];
+  goals: Goal[];
+  completedGoals: CompletedGoal[];
   settings: Settings;
   totalXP: number;
   playerLevel: number;

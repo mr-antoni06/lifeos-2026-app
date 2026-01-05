@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Habit, HabitLog, AntiScrollLog, Settings, GameState } from './types';
+import { Habit, HabitLog, AntiScrollLog, Settings, GameState, Goal, SubGoal, CompletedGoal } from './types';
 import { startOfDay, format, differenceInDays, parseISO } from 'date-fns';
 
 // XP calculation: base XP = target value, bonus for exceeding target
@@ -31,6 +31,17 @@ interface LifeOSStore extends GameState {
   // Streak calculation
   updateStreaks: () => void;
   
+  // Goal actions
+  addGoal: (title: string, description: string, startDate: string, endDate: string, reward?: string) => void;
+  updateGoal: (id: string, updates: Partial<Omit<Goal, 'id' | 'createdAt' | 'completed'>>) => void;
+  deleteGoal: (id: string) => void;
+  completeGoal: (id: string) => void;
+  addSubGoal: (goalId: string, title: string) => void;
+  updateSubGoal: (goalId: string, subGoalId: string, updates: Partial<SubGoal>) => void;
+  deleteSubGoal: (goalId: string, subGoalId: string) => void;
+  toggleSubGoal: (goalId: string, subGoalId: string) => void;
+  deleteCompletedGoal: (id: string) => void;
+  
   // Settings
   updateSettings: (updates: Partial<Settings>) => void;
   
@@ -51,6 +62,8 @@ export const useLifeOSStore = create<LifeOSStore>()(
       habits: [],
       logs: [],
       antiScrollLogs: [],
+      goals: [],
+      completedGoals: [],
       settings: defaultSettings,
       totalXP: 0,
       playerLevel: 1,
@@ -219,11 +232,131 @@ export const useLifeOSStore = create<LifeOSStore>()(
         }));
       },
 
+      // Goal actions
+      addGoal: (title, description, startDate, endDate, reward) => {
+        const newGoal: Goal = {
+          id: `goal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          title,
+          description,
+          startDate,
+          endDate,
+          reward,
+          subGoals: [],
+          completed: false,
+          createdAt: new Date().toISOString(),
+        };
+        
+        set((state) => ({
+          goals: [...state.goals, newGoal],
+        }));
+      },
+
+      updateGoal: (id, updates) => {
+        set((state) => ({
+          goals: state.goals.map((g) => (g.id === id ? { ...g, ...updates } : g)),
+        }));
+      },
+
+      deleteGoal: (id) => {
+        set((state) => ({
+          goals: state.goals.filter((g) => g.id !== id),
+        }));
+      },
+
+      completeGoal: (id) => {
+        const state = get();
+        const goal = state.goals.find((g) => g.id === id);
+        
+        if (!goal) return;
+
+        const completedGoal: CompletedGoal = {
+          ...goal,
+          completed: true,
+          completedAt: new Date().toISOString(),
+        };
+
+        set((state) => ({
+          goals: state.goals.filter((g) => g.id !== id),
+          completedGoals: [...state.completedGoals, completedGoal],
+        }));
+      },
+
+      addSubGoal: (goalId, title) => {
+        const newSubGoal: SubGoal = {
+          id: `subgoal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          title,
+          completed: false,
+          completedAt: null,
+        };
+
+        set((state) => ({
+          goals: state.goals.map((g) =>
+            g.id === goalId
+              ? { ...g, subGoals: [...g.subGoals, newSubGoal] }
+              : g
+          ),
+        }));
+      },
+
+      updateSubGoal: (goalId, subGoalId, updates) => {
+        set((state) => ({
+          goals: state.goals.map((g) =>
+            g.id === goalId
+              ? {
+                  ...g,
+                  subGoals: g.subGoals.map((sg) =>
+                    sg.id === subGoalId ? { ...sg, ...updates } : sg
+                  ),
+                }
+              : g
+          ),
+        }));
+      },
+
+      deleteSubGoal: (goalId, subGoalId) => {
+        set((state) => ({
+          goals: state.goals.map((g) =>
+            g.id === goalId
+              ? { ...g, subGoals: g.subGoals.filter((sg) => sg.id !== subGoalId) }
+              : g
+          ),
+        }));
+      },
+
+      toggleSubGoal: (goalId, subGoalId) => {
+        set((state) => ({
+          goals: state.goals.map((g) =>
+            g.id === goalId
+              ? {
+                  ...g,
+                  subGoals: g.subGoals.map((sg) =>
+                    sg.id === subGoalId
+                      ? {
+                          ...sg,
+                          completed: !sg.completed,
+                          completedAt: !sg.completed ? new Date().toISOString() : null,
+                        }
+                      : sg
+                  ),
+                }
+              : g
+          ),
+        }));
+      },
+
+      deleteCompletedGoal: (id) => {
+        set((state) => ({
+          completedGoals: state.completedGoals.filter((g) => g.id !== id),
+        }));
+      },
+
       resetAll: () => {
         set({
           habits: [],
           logs: [],
           antiScrollLogs: [],
+          goals: [],
+          completedGoals: [],
           settings: defaultSettings,
           totalXP: 0,
           playerLevel: 1,
