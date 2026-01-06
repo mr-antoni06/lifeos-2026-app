@@ -61,12 +61,28 @@ export interface CompletedGoal extends Goal {
   completedAt: string;
 }
 
+export interface PlannerTask {
+  id: string;
+  title: string;
+  date: string; // ISO date string (yyyy-MM-dd)
+  time?: string; // Time in HH:mm format
+  color: string; // hex color
+  completed: boolean;
+  createdAt: string;
+}
+
+export interface CompletedPlannerTask extends PlannerTask {
+  completedAt: string;
+}
+
 export interface GameState {
   habits: Habit[];
   logs: HabitLog[];
   antiScrollLogs: AntiScrollLog[];
   goals: Goal[];
   completedGoals: CompletedGoal[];
+  plannerTasks: PlannerTask[];
+  completedPlannerTasks: CompletedPlannerTask[];
   settings: Settings;
   totalXP: number;
   playerLevel: number;

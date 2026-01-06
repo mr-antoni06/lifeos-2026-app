@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Habit, HabitLog, AntiScrollLog, Settings, GameState, Goal, SubGoal, CompletedGoal } from './types';
+import { Habit, HabitLog, AntiScrollLog, Settings, GameState, Goal, SubGoal, CompletedGoal, PlannerTask, CompletedPlannerTask } from './types';
 import { startOfDay, format, differenceInDays, parseISO } from 'date-fns';
 
 // XP calculation: base XP = target value, bonus for exceeding target
@@ -42,6 +42,14 @@ interface LifeOSStore extends GameState {
   toggleSubGoal: (goalId: string, subGoalId: string) => void;
   deleteCompletedGoal: (id: string) => void;
   
+  // Planner task actions
+  addPlannerTask: (title: string, date: string, time: string | undefined, color: string) => void;
+  updatePlannerTask: (id: string, updates: Partial<Omit<PlannerTask, 'id' | 'createdAt'>>) => void;
+  deletePlannerTask: (id: string) => void;
+  togglePlannerTask: (id: string) => void;
+  completePlannerTask: (id: string) => void;
+  deleteCompletedPlannerTask: (id: string) => void;
+  
   // Settings
   updateSettings: (updates: Partial<Settings>) => void;
   
@@ -64,6 +72,8 @@ export const useLifeOSStore = create<LifeOSStore>()(
       antiScrollLogs: [],
       goals: [],
       completedGoals: [],
+      plannerTasks: [],
+      completedPlannerTasks: [],
       settings: defaultSettings,
       totalXP: 0,
       playerLevel: 1,
@@ -350,6 +360,69 @@ export const useLifeOSStore = create<LifeOSStore>()(
         }));
       },
 
+      // Planner task actions
+      addPlannerTask: (title, date, time, color) => {
+        const newTask: PlannerTask = {
+          id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          title,
+          date,
+          time,
+          color,
+          completed: false,
+          createdAt: new Date().toISOString(),
+        };
+
+        set((state) => ({
+          plannerTasks: [...state.plannerTasks, newTask],
+        }));
+      },
+
+      updatePlannerTask: (id, updates) => {
+        set((state) => ({
+          plannerTasks: state.plannerTasks.map((t) => 
+            t.id === id ? { ...t, ...updates } : t
+          ),
+        }));
+      },
+
+      deletePlannerTask: (id) => {
+        set((state) => ({
+          plannerTasks: state.plannerTasks.filter((t) => t.id !== id),
+        }));
+      },
+
+      togglePlannerTask: (id) => {
+        set((state) => ({
+          plannerTasks: state.plannerTasks.map((t) =>
+            t.id === id ? { ...t, completed: !t.completed } : t
+          ),
+        }));
+      },
+
+      completePlannerTask: (id) => {
+        const state = get();
+        const task = state.plannerTasks.find((t) => t.id === id);
+        
+        if (!task) return;
+
+        const completedTask: CompletedPlannerTask = {
+          ...task,
+          completed: true,
+          completedAt: new Date().toISOString(),
+        };
+
+        set((state) => ({
+          plannerTasks: state.plannerTasks.filter((t) => t.id !== id),
+          completedPlannerTasks: [...state.completedPlannerTasks, completedTask],
+        }));
+      },
+
+      deleteCompletedPlannerTask: (id) => {
+        set((state) => ({
+          completedPlannerTasks: state.completedPlannerTasks.filter((t) => t.id !== id),
+        }));
+      },
+
       resetAll: () => {
         set({
           habits: [],
@@ -357,6 +430,8 @@ export const useLifeOSStore = create<LifeOSStore>()(
           antiScrollLogs: [],
           goals: [],
           completedGoals: [],
+          plannerTasks: [],
+          completedPlannerTasks: [],
           settings: defaultSettings,
           totalXP: 0,
           playerLevel: 1,
