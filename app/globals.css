@@ -12,31 +12,95 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: #000000;
+  background-color: #050505;
   color: #888888;
   font-family: 'Inter', system-ui, sans-serif;
 }
 
-/* Scrollbar styling */
+/* The Void: Deep background with cinematic noise */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #050505;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Vignette effect - darken corners for cinematic focus */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(5, 5, 5, 0.4) 70%, rgba(5, 5, 5, 0.8) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Scrollbar styling - sci-fi sleek */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
   background: #0a0a0a;
+  border-left: 1px solid #1a1a1a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
+  background: linear-gradient(180deg, #00ff41 0%, #00d9ff 100%);
   border-radius: 4px;
+  box-shadow: 0 0 6px rgba(0, 255, 65, 0.5);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2a2a2a;
+  background: linear-gradient(180deg, #00ff66 0%, #00ffff 100%);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
 }
 
-/* Selection styling */
+/* Selection styling - neon highlight */
 ::selection {
-  background-color: #00ff41;
+  background: linear-gradient(90deg, #00ff41 0%, #00ffff 100%);
   color: #000000;
+  text-shadow: none;
+}
+
+/* Glass morphism border shine effect */
+@keyframes border-shine {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Neon text glow utility */
+.text-neon-glow {
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.8), 0 0 20px rgba(0, 255, 65, 0.4);
+}
+
+.text-cyan-glow {
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.8), 0 0 20px rgba(0, 217, 255, 0.4);
+}
+
+.text-purple-glow {
+  text-shadow: 0 0 10px rgba(201, 0, 255, 0.8), 0 0 20px rgba(201, 0, 255, 0.4);
+}
+
+/* Monospace numbers for computational look */
+.font-computation {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
 }

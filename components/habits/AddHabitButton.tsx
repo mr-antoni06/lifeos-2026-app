@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useLifeOSStore } from '@/lib/store';
 import { Plus, X } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import MagneticButton from '@/components/ui/MagneticButton';
+import GlassContainer from '@/components/ui/GlassContainer';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const iconOptions = [
   'Target', 'BookOpen', 'Dumbbell', 'Code', 'Palette', 'Music',
@@ -43,28 +46,41 @@ export default function AddHabitButton() {
 
   if (!isOpen) {
     return (
-      <button
+      <MagneticButton
         onClick={() => setIsOpen(true)}
-        className="w-10 h-10 rounded-full border-2 border-cyber-neon bg-cyber-black hover:bg-cyber-neon/10 flex items-center justify-center transition-all group"
+        className="w-10 h-10 rounded-full border-2 border-cyber-neon bg-cyber-black/50 hover:bg-cyber-neon/10 flex items-center justify-center transition-all group backdrop-blur-sm shadow-neon hover:shadow-neon-strong"
+        magneticStrength={0.5}
       >
-        <Plus className="w-5 h-5 text-cyber-neon" />
-      </button>
+        <Plus className="w-5 h-5 text-cyber-neon group-hover:rotate-90 transition-transform duration-300" />
+      </MagneticButton>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-cyber-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-cyber-panel border border-cyber-neon rounded-lg p-6 max-w-md w-full">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-medium text-white">{'>'} NEW PROTOCOL</h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-cyber-gray rounded transition-all"
-          >
-            <X className="w-5 h-5 text-cyber-text-muted hover:text-cyber-neon" />
-          </button>
-        </div>
+    <AnimatePresence>
+      <motion.div 
+        className="fixed inset-0 bg-cyber-black/95 backdrop-blur-md flex items-center justify-center z-50 p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <motion.div
+          initial={{ scale: 0.9, y: 20, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.9, y: 20, opacity: 0 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        >
+          <GlassContainer glowColor="neon" className="p-6 max-w-md w-full">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-medium text-white text-neon-glow">{'>'} NEW PROTOCOL</h2>
+              <MagneticButton
+                onClick={() => setIsOpen(false)}
+                className="p-2 hover:bg-cyber-gray/50 rounded transition-all backdrop-blur-sm"
+              >
+                <X className="w-5 h-5 text-cyber-text-muted hover:text-cyber-red transition-colors" />
+              </MagneticButton>
+            </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -154,12 +170,14 @@ export default function AddHabitButton() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full px-4 py-3 bg-cyber-neon text-cyber-black hover:bg-cyber-neon-bright font-bold rounded transition-all uppercase tracking-wider text-sm"
+            className="w-full px-4 py-3 bg-gradient-to-r from-cyber-neon to-cyber-neon-cyan text-cyber-black hover:shadow-neon-strong font-bold rounded transition-all uppercase tracking-wider text-sm hover:scale-105 active:scale-95 transition-transform"
           >
             + CREATE PROTOCOL
           </button>
         </form>
-      </div>
-    </div>
+          </GlassContainer>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

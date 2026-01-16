@@ -4,7 +4,9 @@ import { useState, useRef, useEffect } from 'react';
 import { Habit } from '@/lib/types';
 import { useLifeOSStore } from '@/lib/store';
 import { Zap, MoreVertical } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import GlassContainer from '@/components/ui/GlassContainer';
+import MagneticButton from '@/components/ui/MagneticButton';
+import OverdriveModal from '@/components/ui/OverdriveModal';
 
 interface HabitCardProps {
   habit: Habit;
@@ -17,6 +19,8 @@ export default function HabitCard({ habit, onEdit }: HabitCardProps) {
   const [customValue, setCustomValue] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showOverdrive, setShowOverdrive] = useState(false);
+  const [newLevel, setNewLevel] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Calculate today's progress
@@ -49,12 +53,8 @@ export default function HabitCard({ habit, onEdit }: HabitCardProps) {
     const result = logProgress(habit.id, value);
     
     if (result.leveledUp) {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#00ff41'],
-      });
+      setNewLevel(result.newLevel || habit.level);
+      setShowOverdrive(true);
     }
   };
 
@@ -74,7 +74,8 @@ export default function HabitCard({ habit, onEdit }: HabitCardProps) {
 
   return (
     <>
-      <div className="bg-cyber-panel border border-cyber-gray rounded-lg p-4 hover:border-cyber-neon/50 transition-all group relative">
+      <GlassContainer enableSpotlight={true} enableScanline={true} className="p-4 group">
+        <div className="relative">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
@@ -138,13 +139,13 @@ export default function HabitCard({ habit, onEdit }: HabitCardProps) {
           <span className="text-xs text-cyber-text-dim uppercase tracking-wider">
             DAILY: {todayProgress} / {habit.target} {habit.unit}
           </span>
-          <span className="text-xs text-cyber-neon font-mono">
+          <span className="text-xs text-cyber-neon font-computation">
             {Math.round(progressPercentage)}%
           </span>
         </div>
-        <div className="h-2 bg-cyber-gray rounded-full overflow-hidden">
+        <div className="h-2 bg-cyber-gray rounded-full overflow-hidden relative">
           <div
-            className="h-full bg-cyber-gray-light transition-all duration-500"
+            className="h-full bg-gradient-to-r from-cyber-neon to-cyber-neon-cyan transition-all duration-500 shadow-neon"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
@@ -153,16 +154,16 @@ export default function HabitCard({ habit, onEdit }: HabitCardProps) {
       {/* XP Progress */}
       <div className="mb-4">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-xs text-cyber-text-dim">
+          <span className="text-xs text-cyber-text-dim font-computation">
             XP: {habit.xp} / {habit.xpToNextLevel}
           </span>
           <span className="text-xs text-cyber-text-dim uppercase tracking-wider">
             NEXT LVL
           </span>
         </div>
-        <div className="h-1.5 bg-cyber-gray rounded-full overflow-hidden">
+        <div className="h-1.5 bg-cyber-gray rounded-full overflow-hidden relative">
           <div
-            className="h-full bg-cyber-blue transition-all duration-500"
+            className="h-full bg-gradient-to-r from-cyber-blue to-cyber-cyan transition-all duration-500 shadow-cyan"
             style={{ width: `${xpPercentage}%` }}
           />
         </div>
@@ -171,18 +172,19 @@ export default function HabitCard({ habit, onEdit }: HabitCardProps) {
       {/* Actions */}
       {!showCustomInput ? (
         <div className="flex gap-2">
-          <button
+          <MagneticButton
             onClick={() => setShowCustomInput(true)}
-            className="px-4 py-2 bg-cyber-gray border border-cyber-gray-light rounded text-xs text-cyber-text-muted hover:text-cyber-neon hover:border-cyber-neon transition-all uppercase tracking-wider"
+            className="px-4 py-2 bg-cyber-gray/50 border border-cyber-gray-light rounded text-xs text-cyber-text-muted hover:text-cyber-neon hover:border-cyber-neon transition-all uppercase tracking-wider backdrop-blur-sm"
           >
             Qty
-          </button>
-          <button
+          </MagneticButton>
+          <MagneticButton
             onClick={() => handleLog(habit.target)}
-            className="flex-1 px-4 py-2 bg-cyber-neon border border-cyber-neon rounded text-xs text-cyber-black font-bold hover:bg-cyber-neon-bright transition-all uppercase tracking-wider"
+            className="flex-1 px-4 py-2 bg-gradient-to-r from-cyber-neon to-cyber-neon-cyan border border-cyber-neon rounded text-xs text-cyber-black font-bold hover:shadow-neon-strong transition-all uppercase tracking-wider"
+            magneticStrength={0.4}
           >
             + LOG DATA
-          </button>
+          </MagneticButton>
         </div>
       ) : (
         <div className="flex gap-2">
@@ -198,21 +200,29 @@ export default function HabitCard({ habit, onEdit }: HabitCardProps) {
               if (e.key === 'Escape') setShowCustomInput(false);
             }}
           />
-          <button
+          <MagneticButton
             onClick={handleCustomLog}
-            className="px-4 py-2 bg-cyber-neon border border-cyber-neon rounded text-xs text-cyber-black font-bold hover:bg-cyber-neon-bright transition-all"
+            className="px-4 py-2 bg-gradient-to-r from-cyber-neon to-cyber-neon-cyan border border-cyber-neon rounded text-xs text-cyber-black font-bold hover:shadow-neon-strong transition-all"
           >
             ✓
-          </button>
-          <button
+          </MagneticButton>
+          <MagneticButton
             onClick={() => setShowCustomInput(false)}
-            className="px-4 py-2 bg-cyber-gray border border-cyber-gray-light rounded text-xs text-cyber-text-muted hover:text-cyber-red hover:border-cyber-red transition-all"
+            className="px-4 py-2 bg-cyber-gray/50 border border-cyber-gray-light rounded text-xs text-cyber-text-muted hover:text-cyber-red hover:border-cyber-red transition-all backdrop-blur-sm"
           >
             ✕
-          </button>
+          </MagneticButton>
         </div>
       )}
-    </div>
+        </div>
+      </GlassContainer>
+
+      {/* Overdrive Level Up Modal */}
+      <OverdriveModal 
+        isOpen={showOverdrive} 
+        level={newLevel}
+        onClose={() => setShowOverdrive(false)} 
+      />
 
     {/* Delete Confirmation Modal */}
     {showDeleteConfirm && (

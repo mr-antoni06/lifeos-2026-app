@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import TopNav from '@/components/layout/TopNav';
+import AuroraBackground from '@/components/ui/AuroraBackground';
 
 export const metadata: Metadata = {
   title: 'LifeOS',
@@ -14,8 +15,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-cyber-black text-cyber-text-muted antialiased">
-        <div className="min-h-screen bg-cyber-black bg-grid-pattern bg-grid">
+      <body className="bg-cyber-void text-cyber-text-muted antialiased">
+        {/* Ambient Aurora Background */}
+        <AuroraBackground />
+        
+        <div className="min-h-screen relative" style={{ zIndex: 10 }}>
           {/* Top Navigation */}
           <TopNav />
           

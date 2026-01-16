@@ -9,6 +9,7 @@ import SystemLevel from '@/components/dashboard/SystemLevel';
 import AddHabitButton from '@/components/habits/AddHabitButton';
 import EditHabitModal from '@/components/habits/EditHabitModal';
 import FactoryResetButton from '@/components/dashboard/FactoryResetButton';
+import TextDecoder from '@/components/ui/TextDecoder';
 
 export default function Dashboard() {
   const { habits, logs, updateStreaks } = useLifeOSStore();
@@ -31,7 +32,7 @@ export default function Dashboard() {
       <div className="lg:col-span-7">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-medium text-cyber-text-muted tracking-wider">
-            {'>'} ACTIVE PROTOCOLS
+            {'>'} <TextDecoder text="ACTIVE PROTOCOLS" speed={40} />
           </h2>
           <AddHabitButton />
         </div>
